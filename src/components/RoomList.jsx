@@ -36,7 +36,6 @@ export default function RoomList() {
                 is_guest: true
             };
             setUser(randomUser);
-            // console.log("Geçici misafir oluşturuldu:", randomUser);
         }
     }, [user, setUser]);
 
@@ -50,7 +49,21 @@ export default function RoomList() {
     }
 
     // İlk açılışta yükle
-    useEffect(() => { loadRooms(); }, []);
+    useEffect(() => {
+        loadRooms();
+
+        // Geri tuşu (Android Back) dinleyicisi: Ana sayfadan çıkış
+        window.handleBackPress = () => {
+            // Kullanıcı "Ana sayfada isem Flutter'a dönecek" dedi.
+            if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+                window.FlutterBridge.postMessage('exitApp');
+            } else {
+                console.log("Flutter Bridge yok, çıkış simüle edildi.");
+            }
+        };
+
+        return () => { window.handleBackPress = null; };
+    }, []);
 
     async function handleCreate() {
         if (!newRoomName.trim()) { alert("Lütfen bir oda ismi girin."); return; }
@@ -69,7 +82,6 @@ export default function RoomList() {
 
     function handleJoin(room) {
         if (!user) {
-            // Eğer kullanıcı henüz oluşmadıysa bir saniye bekle ve tekrar dene (Effect'in çalışmasını bekle)
             alert("Kullanıcı oluşturuluyor, lütfen 1 saniye sonra tekrar deneyin.");
             return;
         }
@@ -83,13 +95,39 @@ export default function RoomList() {
     return (
         <div className="room-list-container">
             {/* === HEADER === */}
-            <div className="rl-header">
+            <div className="rl-header" style={{ paddingTop: '50px' }}>
                 <div className="rl-subtitle">APEXMATCH</div>
                 <div className="rl-title">VAMPİR <span>KÖYLÜ</span></div>
-                {/* Misafir Bilgisi */}
+
+                {/* User Info (Top Right - Improved) */}
                 {user && (
-                    <div style={{ position: 'absolute', top: 10, right: 10, color: '#aaa', fontSize: 10 }}>
-                        {user.username}
+                    <div style={{
+                        position: 'absolute',
+                        top: 40,
+                        right: 20,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        zIndex: 20
+                    }}>
+                        <div style={{
+                            width: 36, height: 36, borderRadius: '50%', overflow: 'hidden',
+                            border: '2px solid #df113a', boxShadow: '0 0 10px rgba(223,17,58,0.5)',
+                            marginBottom: 4, background: '#111'
+                        }}>
+                            <img
+                                src={user.avatar_url || PLACEHOLDERS[0]}
+                                alt="User"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDERS[0]; }}
+                            />
+                        </div>
+                        <div style={{
+                            color: '#ccc', fontSize: 10, fontWeight: 'bold',
+                            textShadow: '0 1px 3px black'
+                        }}>
+                            {user.username}
+                        </div>
                     </div>
                 )}
             </div>
@@ -109,7 +147,6 @@ export default function RoomList() {
                 </div>
 
                 <div className="rl-list-scroll">
-                    {/* Yükleniyor veya Boş Durumu */}
                     {rooms.length === 0 && (
                         <div style={{ textAlign: 'center', color: '#666', padding: '20px', fontSize: '14px' }}>
                             Henüz açık oda yok. İlk sen oluştur! 🩸

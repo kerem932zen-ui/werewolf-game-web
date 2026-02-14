@@ -37,9 +37,10 @@ export default function GameScreen() {
     const [myVote, setMyVote] = useState(null);
     const [lastEliminated, setLastEliminated] = useState(null);
     const [showResult, setShowResult] = useState(false);
-    const [isMicOn, setIsMicOn] = useState(false); // EKLENDI: Mikrofon durumu
+    const [isMicOn, setIsMicOn] = useState(false);
+    const [showExitConfirm, setShowExitConfirm] = useState(false); // Çıkış Onayı
 
-    // ─── SES SİSTEMİ (GameWorld3D yerine burada, çünkü 3D gidince ses gitmesin) ───
+    // ─── SES SİSTEMİ ───
     const [audioStore] = useState(() => ({
         ambient: new Audio('/sounds/ambient.mp3'),
         countdown: new Audio('/sounds/countdown.wav'),
@@ -57,7 +58,6 @@ export default function GameScreen() {
                 audio.currentTime = 0;
                 audio.play().catch(e => console.warn(`Audio play error (${key}):`, e));
             } else if (!loop) {
-                // Zaten çalıyorsa ve loop değilse, başa sarıp tekrar çalması için (örn: fail arka arkaya gelirse)
                 audio.currentTime = 0;
             }
         } catch (e) {
@@ -73,6 +73,19 @@ export default function GameScreen() {
         }
     };
 
+    // Native Back Button Intercept
+    useEffect(() => {
+        window.handleBackPress = () => {
+            setShowExitConfirm(true);
+        };
+        return () => { window.handleBackPress = null; };
+    }, []);
+
+    const handleExitGame = () => {
+        useGameStore.getState().resetGame();
+        setScreen('rooms');
+    };
+
     // Ambient Başlat (Sürekli)
     useEffect(() => {
         playSound('ambient', true, 0.15);
@@ -83,16 +96,15 @@ export default function GameScreen() {
     useEffect(() => {
         if (phase === 'voting') {
             playSound('countdown', true, 0.5);
-            if (audioStore.ambient) audioStore.ambient.volume = 0.05; // Müzik kısılsın
+            if (audioStore.ambient) audioStore.ambient.volume = 0.05;
         } else {
             stopSound('countdown');
-            if (audioStore.ambient) audioStore.ambient.volume = 0.15; // Müzik geri gelsin
+            if (audioStore.ambient) audioStore.ambient.volume = 0.15;
         }
 
         if (phase === 'result') {
             const isVampireFound = lastEliminated?.role === 'werewolf';
             if (!isVampireFound) {
-                // Vampir bulunamadı (Kimse atılmadı veya Köylü atıldı)
                 playSound('fail', false, 0.6);
             }
         }
@@ -147,35 +159,22 @@ export default function GameScreen() {
 
         switch (phase) {
             case 'role_reveal':
-                // Rolleri göstermek yerine direkt oyuna başla, rol sol üstte yazacak
                 setPhase('free_roam');
                 break;
 
             case 'free_roam':
-                // addMessage({ type: 'system', text: '🚶 Serbest dolaş! Konuş ve tartış!' }); // KALDIRILDI
                 startTimer(FREE_ROAM_TIME, () => {
                     setPhase('discussion');
                 });
-                // Bot mesajları
-                setTimeout(() => {
-                    const bots = useGameStore.getState().players.filter((p) => p.is_alive && p.player_id?.startsWith('bot-'));
-                    if (bots.length > 0) {
-                        const b = bots[Math.floor(Math.random() * bots.length)];
-                        const msgs = ['Bence biri şüpheli 🤔', 'Ben masunum! 😇', 'Dikkat edin! 👀', 'Kim vampir? 🧐'];
-                        addMessage({ type: 'chat', username: b.username, text: msgs[Math.floor(Math.random() * msgs.length)] });
-                    }
-                }, 5000);
                 break;
 
             case 'discussion':
-                // addMessage({ type: 'system', text: '🗣️ Tartışma zamanı! Vampir kim?' }); // KALDIRILDI
                 startTimer(DISCUSSION_TIME, () => {
                     setPhase('voting');
                 });
                 break;
 
             case 'voting':
-                // addMessage({ type: 'system', text: '⚖️ OYLAMA! Kimi çıkaralım?' }); // KALDIRILDI
                 setMyVote(null);
                 botVote();
                 startTimer(VOTING_TIME, () => {
@@ -185,7 +184,6 @@ export default function GameScreen() {
 
             case 'result':
                 startTimer(RESULT_TIME, () => {
-                    // Kazanan Kontrolü
                     const s = useGameStore.getState();
                     const alive = s.players.filter((p) => p.is_alive);
                     const wolves = alive.filter((p) => p.role === 'werewolf');
@@ -204,12 +202,11 @@ export default function GameScreen() {
                 break;
         }
 
-        // OYUN BİTİNCE OTOMATİK ÇIKIŞ VE SIFIRLAMA
         if (phase === 'game_over') {
             const tm = setTimeout(() => {
                 useGameStore.getState().resetGame();
                 setScreen('rooms');
-            }, 5000); // 5 saniye bekle ve çık
+            }, 5000);
             return () => clearTimeout(tm);
         }
 
@@ -278,15 +275,37 @@ export default function GameScreen() {
 
     return (
         <div className="game-screen-wrapper">
-            {/* 3D Dünya */}
             {(phase === 'free_roam' || phase === 'discussion') && (
                 <GameWorld3D />
             )}
 
+            {/* Top Right Exit Button (X) */}
+            <button
+                className="game-exit-x-btn"
+                onClick={() => setShowExitConfirm(true)}
+                style={{
+                    position: 'absolute',
+                    top: 15,
+                    right: 15,
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.5)',
+                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    fontSize: 20,
+                    cursor: 'pointer',
+                    zIndex: 200,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+            >
+                ✕
+            </button>
+
+
             {/* HUD Bar */}
             <div className="game-hud-bar">
                 <div className="ghb-left">
-                    {/* Rol Bilgisi */}
                     <div className="my-role-info">
                         <span className="mri-label">ROLÜN:</span>
                         <span className={`mri-value ${myRole === 'werewolf' ? 'wolf' : ''}`}>
@@ -294,7 +313,6 @@ export default function GameScreen() {
                         </span>
                     </div>
 
-                    {/* Mikrofon Butonu */}
                     <button
                         className={`mic-toggle-btn ${isMicOn ? 'mic-on' : 'mic-off'}`}
                         onClick={() => setIsMicOn(!isMicOn)}
@@ -302,7 +320,6 @@ export default function GameScreen() {
                         <span className="material-icons-round">{isMicOn ? 'mic' : 'mic_off'}</span>
                     </button>
 
-                    {/* Timer + Faz Rozeti (Birleşik) */}
                     <div className="phase-timer-badge">
                         <span className="ptb-phase">
                             {phase === 'free_roam' && 'SERBEST'}
@@ -315,13 +332,12 @@ export default function GameScreen() {
                     </div>
                 </div>
 
-                {/* KİŞİ SAYISI SAĞDA KALDI */}
                 <div className="ghb-right">
                     <span className="alive-counter">👥 {aliveCount}/{players.length}</span>
                 </div>
             </div>
 
-            {/* Meclis / Oylama Ekranı */}
+            {/* Oylama Ekranı */}
             {phase === 'voting' && (
                 <div className="assembly-screen">
                     <h2 className="assembly-title">⚖️ OYLAMA: {timer}s</h2>
@@ -336,21 +352,15 @@ export default function GameScreen() {
                                     className={`vote-card ${isVoted ? 'vote-selected' : ''}`}
                                     onClick={() => !isMe && handleVote(p.player_id)}
                                 >
-                                    {/* Avatar */}
                                     <div className="vote-avatar-frame">
                                         <img
                                             src={p.avatar_url || getAvatar(i)}
                                             alt="Avatar"
                                             onError={(e) => { e.target.onerror = null; e.target.src = getAvatar(i) }}
                                         />
-                                        {/* Vote Count Badge */}
                                         {voteCount > 0 && <div className="vote-badge">{voteCount}</div>}
                                     </div>
-
-                                    {/* Name */}
                                     <div className="vote-name">{isMe ? '(Sen)' : p.username.split(' (Bot)')[0]}</div>
-
-                                    {/* Bot Mic İKONU KALDIRILDI */}
                                 </div>
                             );
                         })}
@@ -358,8 +368,6 @@ export default function GameScreen() {
                     {myVote ? <div className="assembly-status status-voted">✅ OY KULLANILDI</div> : myAlive && <div className="assembly-status pulse-text">👆 BİRİNİ SEÇ!</div>}
                 </div>
             )}
-
-
 
             {/* Sonuç Ekranı */}
             {phase === 'result' && showResult && (
@@ -385,6 +393,30 @@ export default function GameScreen() {
                         )}
                         <div style={{ marginTop: 10, fontSize: 12, color: '#888' }}>
                             {timer}s sonra yeni tur...
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Exit Confirmation (Game) */}
+            {showExitConfirm && (
+                <div className="result-overlay">
+                    <div className="result-card" style={{ maxWidth: 400 }}>
+                        <h2 style={{ color: '#ef4444' }}>Oyundan Çık?</h2>
+                        <p style={{ color: '#ccc', margin: '20px 0' }}>Oyundan çıkmak istediğine emin misin? Bu işlem geri alınamaz.</p>
+                        <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
+                            <button
+                                onClick={() => setShowExitConfirm(false)}
+                                style={{ padding: '10px 20px', borderRadius: 10, background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}
+                            >
+                                İPTAL
+                            </button>
+                            <button
+                                onClick={handleExitGame}
+                                style={{ padding: '10px 20px', borderRadius: 10, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+                            >
+                                ÇIK
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -15,11 +15,12 @@ const PLACEHOLDER_AVATARS = [
 export default function Lobby() {
     const { user, currentRoom, players, setPlayers, addPlayer, removePlayer, setScreen, setPhase } = useGameStore();
     const [ready, setReady] = useState(false);
+    const [showExitConfirm, setShowExitConfirm] = useState(false); // Çıkış Onayı
+
     const isOwner = currentRoom?.owner_id === user?.id;
     const MAX_SLOTS = currentRoom?.max_players || 12;
 
     const hasJoinedRef = useRef(false);
-    // Yeni Ref: Oyun başladı mı?
     const isGameStartingRef = useRef(false);
 
     useEffect(() => {
@@ -48,9 +49,8 @@ export default function Lobby() {
                 return loadPlayers(me);
             })
             .then(() => {
-                console.log(`[LOBBY] Liste güncellendi. Kurucu: ${currentRoom.owner_id} vs Biz: ${user.id}`);
+                console.log(`[LOBBY] Liste güncellendi.`);
                 if (currentRoom.owner_id === user.id) {
-                    console.log(`[LOBBY] Kurucu olduğumuz için Ready sinyali atılıyor.`);
                     setPlayerReady(currentRoom.id, user.id, true);
                     setReady(true);
                     useGameStore.getState().updatePlayer(user.id, { is_ready: true });
@@ -59,70 +59,55 @@ export default function Lobby() {
             })
             .catch(console.error);
 
-        console.log(`[LOBBY] PieSocket bağlanıyor...`);
         pieSocket.connect(currentRoom.id, { id: user.id, username: user.username, avatar_url: user.avatar_url, color });
 
         const offJoined = pieSocket.on('player_connected', (data) => {
-            console.log(`[LOBBY] Socket: Oyuncu bağlandı ->`, data.username);
             if (data.id !== user.id) {
                 addPlayer({ ...data, is_alive: true, is_ready: false });
             }
         });
 
         const offLeft = pieSocket.on('player_left', (data) => {
-            console.log(`[LOBBY] Socket: Oyuncu ayrıldı -> ID:`, data.id);
             removePlayer(data.id);
         });
 
         const offReady = pieSocket.on('player_ready', (data) => {
-            console.log(`[LOBBY] Socket: Hazır durumu değişti -> ID: ${data.id}, Ready: ${data.ready}`);
             useGameStore.getState().updatePlayer(data.id, { is_ready: data.ready });
         });
 
-        // Backend tarafında handleStart fonksiyonu "phase_change" atıyor,
-        // ama diğer taraf "game_start" dinlerse çalışmaz.
-        // Bu yüzden "phase_change" dinliyoruz.
         const offPhase = pieSocket.on('phase_change', (data) => {
-            console.log(`[LOBBY] Socket: Phase Change algılandı (Oyun Başlıyor!) ->`, data);
-
-            // Eğer oyun 'role_reveal' evresine geçtiyse, bu bir oyun başlangıcıdır!
             if (data.phase === 'role_reveal') {
-                isGameStartingRef.current = true; // Cleanup'ta 'player_left' atılmasını engelle
-
-                // Rolleri dağıt
+                isGameStartingRef.current = true;
                 if (data.roles) {
                     const myAssignment = data.roles.find((a) => a.playerId === user?.id);
                     if (myAssignment) useGameStore.getState().setMyRole(myAssignment.role);
                     data.roles.forEach(({ playerId, role }) => useGameStore.getState().updatePlayer(playerId, { role }));
                 }
-
                 setPhase('role_reveal');
                 setScreen('game');
             }
         });
 
-        return () => {
-            console.log(`[LOBBY] Cleanup running... IsGameStarting:`, isGameStartingRef.current);
-            offJoined(); offLeft(); offReady(); offPhase();
+        // Native Back Button
+        window.handleBackPress = () => {
+            setShowExitConfirm(true);
+        };
 
-            // Eğer oyun başlamıyorsa ve biz çıkıyorsak 'player_left' at.
-            // Oyun başlıyorsa ATMA, çünkü o zaman diğer oyuncular bizi çıktı sanıp siliyor.
+        return () => {
+            console.log(`[LOBBY] Cleanup running...`);
+            offJoined(); offLeft(); offReady(); offPhase();
+            window.handleBackPress = null;
+
             if (!isGameStartingRef.current) {
                 pieSocket.send('player_left', { id: user.id });
-                // DEV NOTE: React StrictMode yüzünden leaveRoom'u burada kapalı tutuyoruz,
-                // sadece handleLeave'de siliyoruz.
             }
-
             hasJoinedRef.current = false;
         };
     }, [currentRoom?.id]);
 
     async function loadPlayers(currentUserData = null) {
         try {
-            console.log(`[LOBBY] DB'den oyuncular çekiliyor...`);
             const dbPlayers = await getRoomPlayers(currentRoom.id);
-            console.log(`[LOBBY] DB Oyuncuları:`, dbPlayers);
-
             let finalList = [...dbPlayers];
             const myId = user?.id;
 
@@ -130,39 +115,27 @@ export default function Lobby() {
 
             if (!amIInList) {
                 if (currentUserData) {
-                    console.warn(`[LOBBY] !Kritik: DB listesinde yokuz, Local Data ile restore ediliyor.`);
                     finalList.push(currentUserData);
                 } else {
                     const currentStorePlayers = useGameStore.getState().players;
                     const meInStore = currentStorePlayers.find(p => p.player_id === myId);
                     if (meInStore) {
-                        console.warn(`[LOBBY] !Kritik: DB listesinde yokuz, Store'dan restore ediliyor.`);
                         finalList.push(meInStore);
                     } else {
-                        console.error(`[LOBBY] !Hata: Oyuncu verisi kayıp, yeniden oluşturuluyor.`);
                         const emergencyMe = {
-                            player_id: user.id,
-                            username: user.username,
-                            avatar_url: user.avatar_url,
-                            color: GAME_CONFIG.COLORS[0],
-                            is_ready: currentRoom.owner_id === user.id,
-                            is_alive: true,
-                            is_bot: false
+                            player_id: user.id, username: user.username, avatar_url: user.avatar_url,
+                            color: GAME_CONFIG.COLORS[0], is_ready: currentRoom.owner_id === user.id,
+                            is_alive: true, is_bot: false
                         };
                         finalList.push(emergencyMe);
                     }
                 }
             }
-
             finalList = finalList.map(p => {
-                if (p.player_id === currentRoom.owner_id) {
-                    return { ...p, is_ready: true };
-                }
+                if (p.player_id === currentRoom.owner_id) return { ...p, is_ready: true };
                 return p;
             });
-
             setPlayers(finalList);
-
         } catch (e) { console.error(`[LOBBY] Oyuncu yükleme hatası:`, e); }
     }
 
@@ -182,24 +155,15 @@ export default function Lobby() {
         const everyoneReady = players.every(p => p.is_ready);
         if (!everyoneReady) { alert("Tüm oyuncular hazır olmalı!"); return; }
 
-        // MANTIKSAL BUG FIX: setScreen('game') yapmadan ÖNCE flag'i set etmeliyiz!
         isGameStartingRef.current = true;
 
         const roles = distributeRoles(players.length);
         const shuffled = [...players].sort(() => Math.random() - 0.5);
         const assignments = shuffled.map((p, i) => ({ playerId: p.player_id, role: roles[i] }));
-        const myAssignment = assignments.find((a) => a.playerId === user?.id);
 
-        if (myAssignment) useGameStore.getState().setMyRole(myAssignment.role);
-        assignments.forEach(({ playerId, role }) => useGameStore.getState().updatePlayer(playerId, { role }));
-
-        // DİKKAT: Burada 'game_start' değil 'phase_change' atıyoruz.
-        // Diğer tarafta da 'phase_change' dinlemeliyiz.
         pieSocket.send('phase_change', { phase: 'role_reveal', round: 1, roles: assignments });
-
-        useGameStore.getState().setRound(1);
         setPhase('role_reveal');
-        setScreen('game'); // Bu call Lobby'yi unmount eder -> Cleanup çalışır -> isGameStartingRef true olduğu için player_left ATMAZ.
+        setScreen('game');
     }
 
     function distributeRoles(count) {
@@ -220,8 +184,6 @@ export default function Lobby() {
     const allReady = players.length >= 2 && players.every(p => p.is_ready);
     const emptySlots = Math.max(0, MAX_SLOTS - players.length);
 
-    console.log(`[DEBUG] Players: ${players.length}, Ready: ${readyCount}, AllReady: ${allReady}, StartBtn: ${isOwner && allReady}`);
-
     return (
         <div className="lobby-container">
             <div className="fog-container">
@@ -231,7 +193,8 @@ export default function Lobby() {
             </div>
 
             <header className="lobby-header">
-                <button className="btn-back-circle" onClick={handleLeave}>
+                {/* Sol Üst Geri Butonu -> POPUP */}
+                <button className="btn-back-circle" onClick={() => setShowExitConfirm(true)}>
                     <span className="material-icons-round">chevron_left</span>
                 </button>
                 <div className="room-info-center">
@@ -276,7 +239,8 @@ export default function Lobby() {
             </div>
 
             <div className="lobby-footer">
-                <button className="btn-not-ready" onClick={handleLeave}>ÇIKIŞ</button>
+                {/* Alt Çıkış Butonu -> POPUP */}
+                <button className="btn-not-ready" onClick={() => setShowExitConfirm(true)}>ÇIKIŞ</button>
                 <button className="btn-not-ready" style={{ background: '#333' }} onClick={() => loadPlayers()}>YENİLE</button>
 
                 {isOwner && allReady ? (
@@ -293,6 +257,36 @@ export default function Lobby() {
                     </button>
                 )}
             </div>
+
+            {/* Exit Confirmation (Lobby) */}
+            {showExitConfirm && (
+                <div style={{
+                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 100,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setShowExitConfirm(false)}>
+                    <div style={{
+                        background: '#111', border: '1px solid #333', padding: '30px', borderRadius: '24px',
+                        textAlign: 'center', maxWidth: '80%', width: '300px', boxShadow: '0 0 50px rgba(0,0,0,0.8)'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <h2 style={{ color: '#ef4444', marginBottom: 10 }}>Odadan Ayrıl?</h2>
+                        <p style={{ color: '#ccc', margin: '20px 0' }}>Lobiden çıkmak istediğine emin misin?</p>
+                        <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
+                            <button
+                                onClick={() => setShowExitConfirm(false)}
+                                style={{ padding: '10px 20px', borderRadius: 10, background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}
+                            >
+                                İPTAL
+                            </button>
+                            <button
+                                onClick={handleLeave}
+                                style={{ padding: '10px 20px', borderRadius: 10, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+                            >
+                                ÇIK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
