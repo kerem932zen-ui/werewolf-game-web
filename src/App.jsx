@@ -7,30 +7,45 @@ import GameScreen from './components/GameScreen';
 import './App.css';
 
 function App() {
-  const { user, setUser, screen } = useGameStore();
+  const { user, setUser, setScreen, setCurrentRoom, screen } = useGameStore();
 
   useEffect(() => {
-    // Flutter'dan kullanıcı bilgisi al
+    // 1. Flutter'dan kullanıcı bilgisi al (window.setUserData)
     window.setUserData = (data) => {
       setUser({
         id: data.id,
         username: data.username || data.full_name || 'Oyuncu',
         avatar_url: data.avatar_url || null,
       });
+
+      // Flutter'dan oda bilgisi de gelirse
+      if (data.roomId) {
+        setCurrentRoom({ id: data.roomId });
+        setScreen('lobby');
+      }
     };
 
-    // URL params'dan da alabiliriz
+    // 2. URL params'dan oku (Deep Link / WebView için kritik)
     const params = new URLSearchParams(window.location.search);
-    const userId = params.get('userId');
-    const username = params.get('username');
-    const avatarUrl = params.get('avatarUrl');
+    const userIdParams = params.get('userId');
+    const usernameParams = params.get('username');
+    const avatarUrlParams = params.get('avatarUrl');
+    const roomIdParams = params.get('roomId'); // Odaya direkt giriş için
 
-    if (userId && username) {
-      setUser({ id: userId, username, avatar_url: avatarUrl || null });
+    if (userIdParams && usernameParams) {
+      // Kullanıcıyı ayarla
+      setUser({ id: userIdParams, username: usernameParams, avatar_url: avatarUrlParams || null });
+
+      // Eğer oda ID varsa ve henüz bir odaya girmemişsek -> Lobiye (odaya) at
+      if (roomIdParams) {
+        setCurrentRoom({ id: roomIdParams });
+        setScreen('lobby');
+      }
     }
 
-    // Supabase session kontrolü (backup)
+    // 3. Supabase session kontrolü (Web tarayıcıdan girenler için)
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // Eğer store'da user yoksa session'dan al
       if (session?.user && !useGameStore.getState().user) {
         const u = session.user;
         setUser({
