@@ -8,6 +8,7 @@ import { getModelName } from '../../utils/models';
 const MOVE_SPEED = 6;
 const BOUNDS = 25;
 const MOUSE_SENSITIVITY = 0.003;
+const TOUCH_SENSITIVITY = 0.005; // Telefondaki hassasiyet
 const JUMP_FORCE = 0.4;
 const GRAVITY = 0.02;
 
@@ -24,6 +25,7 @@ export default function Player({ joystickInput, color = '#44aaff', startPos = [0
 
     const keysRef = useRef({ w: false, a: false, s: false, d: false });
     const mouseRef = useRef({ isDown: false, lastX: 0, lastY: 0 });
+    const touchRef = useRef({ isDown: false, id: null, lastX: 0, lastY: 0 }); // Dokunmatik kontrol
     const currentAnimRef = useRef('Idle');
 
     const modelName = useMemo(() => getModelName(username), [username]);
@@ -144,9 +146,11 @@ export default function Player({ joystickInput, color = '#44aaff', startPos = [0
         };
     }, [actions]);
 
-    // ─── KAMERA KONTROLÜ (Sağ Tık) ───
+    // ─── KAMERA KONTROLÜ (Mouse & Touch) ───
     useEffect(() => {
         const canvas = gl.domElement;
+
+        // --- MOUSE ---
         const handleMouseDown = (e) => {
             if (e.button === 2) {
                 mouseRef.current.isDown = true;
@@ -166,15 +170,70 @@ export default function Player({ joystickInput, color = '#44aaff', startPos = [0
         const handleMouseUp = () => { mouseRef.current.isDown = false; };
         const handleContextMenu = (e) => e.preventDefault();
 
+        // --- TOUCH (Mobil) ---
+        const handleTouchStart = (e) => {
+            // Çoklu dokunmayı yönet: Sadece ilk yakalanan parmağı kamera için kullan (Joystick olmayan)
+            // Not: Joystick `preventDefault` yaparsa events buraya gelmez.
+            // Biz sadece "boş" alana dokunulanı alalım.
+            const touch = e.changedTouches[0];
+            touchRef.current.id = touch.identifier;
+            touchRef.current.lastX = touch.clientX;
+            touchRef.current.lastY = touch.clientY;
+            touchRef.current.isDown = true;
+        };
+
+        const handleTouchMove = (e) => {
+            if (!touchRef.current.isDown) return;
+
+            // Bizim takip ettiğimiz parmak mı hareket etti?
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === touchRef.current.id) {
+                    const t = e.changedTouches[i];
+                    const dx = t.clientX - touchRef.current.lastX;
+                    const dy = t.clientY - touchRef.current.lastY;
+                    touchRef.current.lastX = t.clientX;
+                    touchRef.current.lastY = t.clientY;
+
+                    cameraAngleRef.current.theta -= dx * TOUCH_SENSITIVITY;
+                    cameraAngleRef.current.phi = Math.max(0.1, Math.min(1.4, cameraAngleRef.current.phi + dy * TOUCH_SENSITIVITY));
+                    break;
+                }
+            }
+        };
+
+        const handleTouchEnd = (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === touchRef.current.id) {
+                    touchRef.current.isDown = false;
+                    touchRef.current.id = null;
+                    break;
+                }
+            }
+        };
+
         canvas.addEventListener('mousedown', handleMouseDown);
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('contextmenu', handleContextMenu);
+
+        // Touch Listeners
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        // Touch move için window kullanıyoruz ki parmak canvas dışına kaysa da (ancak bu scroll'u bozabilir, o yüzden dikkat)
+        // Oyun full screen olacağı için canvas üzerinde kalsa daha iyi, ama 'window' daha smooth olur.
+        // Ancak preventDefault için 'passive: false' önemli.
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
+        window.addEventListener('touchend', handleTouchEnd);
+
+
         return () => {
             canvas.removeEventListener('mousedown', handleMouseDown);
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
             canvas.removeEventListener('contextmenu', handleContextMenu);
+
+            canvas.removeEventListener('touchstart', handleTouchStart);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleTouchEnd);
         };
     }, [gl]);
 

@@ -9,8 +9,26 @@ import './App.css';
 function App() {
   const { user, setUser, setScreen, setCurrentRoom, screen } = useGameStore();
 
+  // 1. Ekran Yönü Sinyali (Flutter için)
   useEffect(() => {
-    // 1. Flutter'dan kullanıcı bilgisi al (window.setUserData)
+    const sendOrientation = (mode) => {
+      // FlutterBridge JavascriptChannel ile tanımlanır
+      if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
+        window.FlutterBridge.postMessage(mode);
+        console.log("Sent to Flutter:", mode);
+      }
+    };
+
+    if (screen === 'game') {
+      sendOrientation('setLandscape');
+    } else {
+      // Lobi, Odalar veya Login ekranındaysak DİKEY olsun
+      sendOrientation('setPortrait');
+    }
+  }, [screen]);
+
+  useEffect(() => {
+    // 2. Flutter'dan kullanıcı bilgisi al (window.setUserData manuel tetikleme için)
     window.setUserData = (data) => {
       setUser({
         id: data.id,
@@ -18,50 +36,40 @@ function App() {
         avatar_url: data.avatar_url || null,
       });
 
-      // Flutter'dan oda bilgisi de gelirse
       if (data.roomId) {
         setCurrentRoom({ id: data.roomId });
         setScreen('lobby');
       }
     };
 
-    // 2. URL params'dan oku (Deep Link / WebView için kritik)
+    // 3. URL params'dan oku (Deep Link / WebView başlangıcı)
     const params = new URLSearchParams(window.location.search);
     const userIdParams = params.get('userId');
-    let usernameParams = params.get('username');
+    const usernameParams = params.get('username');
     let avatarUrlParams = params.get('avatarUrl');
-    const roomIdParams = params.get('roomId'); // Odaya direkt giriş için
+    const roomIdParams = params.get('roomId');
 
     console.log("[App] URL Params Raw:", { userIdParams, usernameParams, avatarUrlParams, roomIdParams });
 
-    // Decode (Flutter'dan encode edilmiş gelebilir)
-    if (usernameParams) {
-      // Zaten URLSearchParams otomatik decode eder ama bazen çift encode edilir.
-      // Güvenlik için trim yapalım.
-    }
-
+    // Avatar boş/null kontrolü
     if (avatarUrlParams) {
       if (avatarUrlParams === "null" || avatarUrlParams === "undefined" || avatarUrlParams.trim() === "") {
         avatarUrlParams = null;
       }
     }
 
-    console.log("[App] Decoded User:", { id: userIdParams, username: usernameParams, avatar: avatarUrlParams });
-
     if (userIdParams && usernameParams) {
-      // Kullanıcıyı ayarla
+      console.log("[App] Auto-Login via URL");
       setUser({ id: userIdParams, username: usernameParams, avatar_url: avatarUrlParams || null });
 
-      // Eğer oda ID varsa ve henüz bir odaya girmemişsek -> Lobiye (odaya) at
       if (roomIdParams) {
         setCurrentRoom({ id: roomIdParams });
         setScreen('lobby');
       }
     }
 
-    // 3. Supabase session kontrolü (Web tarayıcıdan girenler için - Backup)
+    // 4. Supabase session backup (Web tarayıcıda test için)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      // Eğer store'da user yoksa session'dan al
       if (session?.user && !useGameStore.getState().user) {
         const u = session.user;
         setUser({
@@ -75,7 +83,7 @@ function App() {
     return () => {
       delete window.setUserData;
     };
-  }, []);
+  }, []); // Mount only
 
   // Kullanıcı yok = login yok = demo mod
   if (!user) {
