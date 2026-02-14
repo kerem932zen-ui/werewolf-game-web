@@ -28,9 +28,25 @@ function App() {
     // 2. URL params'dan oku (Deep Link / WebView için kritik)
     const params = new URLSearchParams(window.location.search);
     const userIdParams = params.get('userId');
-    const usernameParams = params.get('username');
-    const avatarUrlParams = params.get('avatarUrl');
+    let usernameParams = params.get('username');
+    let avatarUrlParams = params.get('avatarUrl');
     const roomIdParams = params.get('roomId'); // Odaya direkt giriş için
+
+    console.log("[App] URL Params Raw:", { userIdParams, usernameParams, avatarUrlParams, roomIdParams });
+
+    // Decode (Flutter'dan encode edilmiş gelebilir)
+    if (usernameParams) {
+      // Zaten URLSearchParams otomatik decode eder ama bazen çift encode edilir.
+      // Güvenlik için trim yapalım.
+    }
+
+    if (avatarUrlParams) {
+      if (avatarUrlParams === "null" || avatarUrlParams === "undefined" || avatarUrlParams.trim() === "") {
+        avatarUrlParams = null;
+      }
+    }
+
+    console.log("[App] Decoded User:", { id: userIdParams, username: usernameParams, avatar: avatarUrlParams });
 
     if (userIdParams && usernameParams) {
       // Kullanıcıyı ayarla
@@ -43,7 +59,7 @@ function App() {
       }
     }
 
-    // 3. Supabase session kontrolü (Web tarayıcıdan girenler için)
+    // 3. Supabase session kontrolü (Web tarayıcıdan girenler için - Backup)
     supabase.auth.getSession().then(({ data: { session } }) => {
       // Eğer store'da user yoksa session'dan al
       if (session?.user && !useGameStore.getState().user) {
