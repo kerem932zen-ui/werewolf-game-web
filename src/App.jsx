@@ -4,6 +4,7 @@ import { supabase } from './services/supabaseClient';
 import RoomList from './components/RoomList';
 import Lobby from './components/Lobby';
 import GameScreen from './components/GameScreen';
+import CreateRoom from './components/CreateRoom';
 import './App.css';
 
 function App() {
@@ -93,6 +94,7 @@ function App() {
   return (
     <div className="app">
       {screen === 'rooms' && <RoomList />}
+      {screen === 'create_room' && <CreateRoom />}
       {screen === 'lobby' && <Lobby />}
       {screen === 'game' && <GameScreen />}
     </div>

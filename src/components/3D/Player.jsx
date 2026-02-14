@@ -16,7 +16,7 @@ export default function Player({ joystickInput, color = '#44aaff', startPos = [0
     const groupRef = useRef();
     const { camera, gl } = useThree();
     const [chatBubble, setChatBubble] = useState(null);
-    const cameraAngleRef = useRef({ theta: 0, phi: 0.5 });
+    const cameraAngleRef = useRef({ theta: 0, phi: 1.4 });
 
     const positionRef = useRef(new THREE.Vector3(startPos[0], startPos[1], startPos[2]));
     const rotationYRef = useRef(0);

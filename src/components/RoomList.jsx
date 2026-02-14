@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGameStore } from '../stores/gameStore';
-import { fetchRooms, createRoom } from '../services/supabaseClient';
+import { fetchRooms } from '../services/supabaseClient';
 import './RoomList.css';
 
 const ROOM_ICONS = [
@@ -10,7 +10,6 @@ const ROOM_ICONS = [
     'https://lh3.googleusercontent.com/aida-public/AB6AXuA5i21TAvNShFUXXYX-Kq3eHBbVFHJP0rFhkZNDJtNC-nnzcXqN1-b3NAXF1Ccn1RBgLSviRRie8TbpSGBNYsqs5KL4F3qc4yhVeKhXqF4ewURTlZNT_WFcZvqK4q6C7gcF3WkkFZsQhfpQy6oiXHpVEHchZjFGdJtxjL-kBtzOyOtTr6SHTzePxG_hEo2wTzAc_lv3AdnBvBnhjYF0m05np3J2P61rpG44rELieEjtbNcndxBbwYgxT-SM74JQT1WdbFnMjZgnHmw'
 ];
 
-// Placeholder avatar havuzu (Rastgele kullanıcılar için)
 const PLACEHOLDERS = [
     'https://lh3.googleusercontent.com/aida-public/AB6AXuBSnRKCHf4XefX7kWr0dXRY2YuiTFTBCH92uEwQDGQxnZd0rP-n3yOjjChRNh4hlwnLiUj1lJBk9-ZD0qDtQk87G-ND3Wu70Ta7ZQFoihtWLLWAXL1opIwTA3hhFenZyIpkyew4zMtAY366LCiYMjXw6QepcnFWQGnKorTprHWfUlXc7hlzXUqxSqo2mgRh0Ei5Zta62rvXbWwGr4LR6ECS1rKu63X7h1xAiLmgEZTJEVB9LOrZgRZpStq16yMeQnlWUngjYwUyO7Y',
     'https://lh3.googleusercontent.com/aida-public/AB6AXuAyr1B96qrr5nK9GXGKrQ_H46cfeVs6nD3O23jVuJP4sFQTZo91ATtcsyevA90OiRvkdRDQNihB9fBM6OQJ1WNJ-OF_NwHz6FIEC1RRfkeEtmByR5F78g5Ou5pK735KuT5NDW49suhGJvyzYl9xN4YnzSgs1JAdjDua3e45kuhLdZgG4bvCbeaodWZM8JCj6bFbVDJDoH5sJjLaxVAADuRlayZy8vfGUtFVxbitozWuWWTqf2WgN01Wpqk5AMmw0RxUyLnbUh4kesY',
@@ -20,12 +19,7 @@ const PLACEHOLDERS = [
 
 export default function RoomList() {
     const { user, setUser, rooms, setRooms, setCurrentRoom, setScreen } = useGameStore();
-    const [showCreate, setShowCreate] = useState(false);
-    const [newRoomName, setNewRoomName] = useState('');
-    const [maxPlayers, setMaxPlayers] = useState(2); // Varsayılan 2
-    const [loading, setLoading] = useState(false);
 
-    // Rastgele Kullanıcı Oluştur (Eğer yoksa)
     useEffect(() => {
         if (!user) {
             const randomId = Math.floor(Math.random() * 1000000).toString();
@@ -48,48 +42,23 @@ export default function RoomList() {
         }
     }
 
-    // İlk açılışta yükle
     useEffect(() => {
         loadRooms();
-
-        // Geri tuşu (Android Back) dinleyicisi: Ana sayfadan çıkış
         window.handleBackPress = () => {
-            // Kullanıcı "Ana sayfada isem Flutter'a dönecek" dedi.
+            // Ana sayfada Geri -> Flutter Uygulamasını Kapatır
             if (window.FlutterBridge && typeof window.FlutterBridge.postMessage === 'function') {
                 window.FlutterBridge.postMessage('exitApp');
-            } else {
-                console.log("Flutter Bridge yok, çıkış simüle edildi.");
             }
         };
-
         return () => { window.handleBackPress = null; };
     }, []);
 
-    async function handleCreate() {
-        if (!newRoomName.trim()) { alert("Lütfen bir oda ismi girin."); return; }
-        if (!user) { alert("Oturum açılmamış, lütfen sayfayı yenileyin."); return; }
-
-        setLoading(true);
-        try {
-            const room = await createRoom(newRoomName.trim(), user.id, maxPlayers, false, null);
-            setCurrentRoom(room);
-            setScreen('lobby');
-        } catch (e) {
-            alert('Oda oluşturulamadı: ' + e.message);
-        }
-        setLoading(false);
-    }
-
     function handleJoin(room) {
-        if (!user) {
-            alert("Kullanıcı oluşturuluyor, lütfen 1 saniye sonra tekrar deneyin.");
-            return;
-        }
+        if (!user) { alert("Kullanıcı bekleniyor..."); return; }
         setCurrentRoom(room);
         setScreen('lobby');
     }
 
-    // Rastgele ikon seçimi için basit helper
     const getRoomIcon = (index) => ROOM_ICONS[index % ROOM_ICONS.length];
 
     return (
@@ -99,16 +68,10 @@ export default function RoomList() {
                 <div className="rl-subtitle">APEXMATCH</div>
                 <div className="rl-title">VAMPİR <span>KÖYLÜ</span></div>
 
-                {/* User Info (Top Right - Improved) */}
                 {user && (
                     <div style={{
-                        position: 'absolute',
-                        top: 40,
-                        right: 20,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        zIndex: 20
+                        position: 'absolute', top: 40, right: 20,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 20
                     }}>
                         <div style={{
                             width: 36, height: 36, borderRadius: '50%', overflow: 'hidden',
@@ -122,10 +85,7 @@ export default function RoomList() {
                                 onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDERS[0]; }}
                             />
                         </div>
-                        <div style={{
-                            color: '#ccc', fontSize: 10, fontWeight: 'bold',
-                            textShadow: '0 1px 3px black'
-                        }}>
+                        <div style={{ color: '#ccc', fontSize: 10, fontWeight: 'bold', textShadow: '0 1px 3px black' }}>
                             {user.username}
                         </div>
                     </div>
@@ -134,7 +94,7 @@ export default function RoomList() {
 
             {/* === CREATE BUTTON === */}
             <div className="rl-create-section">
-                <button className="btn-metallic" onClick={() => setShowCreate(true)}>
+                <button className="btn-metallic" onClick={() => setScreen('create_room')}>
                     <span className="material-icons-round">add_circle</span>
                     ODA OLUŞTUR
                 </button>
@@ -181,55 +141,6 @@ export default function RoomList() {
                     ))}
                 </div>
             </div>
-
-            {/* === POPUP (CREATE ROOM) === */}
-            {showCreate && (
-                <div className="popup-overlay" onClick={() => setShowCreate(false)}>
-                    <div className="popup-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="btn-close" onClick={() => setShowCreate(false)}>×</button>
-
-                        <div className="popup-header">
-                            <h2 className="popup-title">Yeni Oda Oluştur</h2>
-                        </div>
-
-                        {/* ODA İSMİ */}
-                        <div className="form-group">
-                            <label className="form-label">Oda İsmi</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="Örn: Karanlık Orman"
-                                value={newRoomName}
-                                onChange={(e) => setNewRoomName(e.target.value)}
-                                autoFocus
-                            />
-                        </div>
-
-                        {/* OYUNCU SAYISI SLIDER (2-10) */}
-                        <div className="form-group">
-                            <label className="form-label">Oyuncu Sayısı</label>
-                            <div className="slider-container">
-                                <span className="slider-value" style={{ width: '30px' }}>2</span>
-                                <input
-                                    type="range"
-                                    min="2"
-                                    max="10"
-                                    step="1"
-                                    value={maxPlayers}
-                                    onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-                                    style={{ flex: 1 }}
-                                />
-                                <span className="slider-value">{maxPlayers}</span>
-                            </div>
-                        </div>
-
-                        {/* OLUŞTUR BUTONU */}
-                        <button className="btn-popup-create" onClick={handleCreate} disabled={loading}>
-                            {loading ? 'OLUŞTURULUYOR...' : '🚀 ODAYI AÇ'}
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
