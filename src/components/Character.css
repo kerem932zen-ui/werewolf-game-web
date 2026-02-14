@@ -1,0 +1,101 @@
+.character {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  position: relative;
+}
+.character:hover { transform: scale(1.08); }
+.character.dead { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
+.character.is-me .char-name { color: #FFD700; font-weight: bold; }
+
+/* Body */
+.char-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.char-head {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--player-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+.char-eye {
+  width: 10px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  position: relative;
+}
+.char-eye::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #222;
+  position: absolute;
+  top: 5px;
+  left: 3px;
+}
+.char-torso {
+  width: 40px;
+  height: 36px;
+  background: var(--player-color);
+  border-radius: 0 0 12px 12px;
+  margin-top: -6px;
+  z-index: 1;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.char-legs {
+  display: flex;
+  gap: 6px;
+  margin-top: -2px;
+}
+.char-leg {
+  width: 14px;
+  height: 20px;
+  background: var(--player-color);
+  border-radius: 0 0 6px 6px;
+  animation: walk 0.4s ease-in-out infinite alternate;
+}
+.char-leg.right { animation-delay: 0.2s; }
+
+@keyframes walk {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(3px); }
+}
+
+/* Info */
+.char-info {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.char-name {
+  font-size: 11px;
+  color: #e0e0e0;
+  background: rgba(0,0,0,0.6);
+  padding: 2px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.char-dead-badge { font-size: 14px; }
+.char-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  position: absolute;
+  top: 4px;
+  border: 2px solid white;
+}

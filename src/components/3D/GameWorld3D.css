@@ -1,0 +1,217 @@
+.game-world-3d {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    background: #87CEEB;
+    touch-action: none;
+}
+
+.game-world-3d canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+/* ─── Mic Button (sağ üst) ─── */
+.mic-button {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+}
+
+.mic-button.mic-on {
+    border-color: rgba(0, 255, 100, 0.5);
+    background: rgba(0, 200, 80, 0.25);
+    box-shadow: 0 0 12px rgba(0, 255, 100, 0.2);
+}
+
+.mic-button:active {
+    transform: scale(0.9);
+}
+
+/* ─── Controls Hint ─── */
+.controls-hint {
+    position: fixed;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 80;
+    pointer-events: none;
+}
+
+.controls-hint span {
+    background: rgba(0, 0, 0, 0.35);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── World Messages ─── */
+.world-messages {
+    position: fixed;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    z-index: 80;
+    pointer-events: none;
+    max-width: 260px;
+}
+
+.world-msg {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    text-align: center;
+    animation: msgFade 4s ease forwards;
+}
+
+@keyframes msgFade {
+    0% {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    8% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    75% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.world-msg-system {
+    color: #ffd93d;
+}
+
+/* ─── ACTION BUTTONS CONTAINER (Sağ Alt) ─── */
+.action-buttons {
+    position: fixed;
+    bottom: 50px;
+    right: 40px;
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    z-index: 100;
+}
+
+/* Ortak Stil - BÜYÜK BOY */
+.mobile-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    /* Joystick stilini taklit eden şeffaf beyaz */
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    touch-action: none;
+    transition: transform 0.1s, background 0.1s, border-color 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-btn svg {
+    width: 50%;
+    height: 50%;
+    fill: currentColor;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+}
+
+/* Basınca efekt */
+.mobile-btn:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.world-msg-vote {
+    color: #ff6b6b;
+}
+
+.world-msg-chat {
+    color: #ccc;
+}
+
+.world-msg-wolf {
+    color: #ff4444;
+}
+
+/* ─── Landscape ─── */
+@media (orientation: landscape) and (max-height: 500px) {
+    .mic-button {
+        top: 6px;
+        right: 8px;
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .action-buttons {
+        bottom: 20px;
+        right: 20px;
+        gap: 15px;
+        bottom: 30px;
+        right: 60px;
+    }
+
+    .mobile-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+
+    .controls-hint {
+        bottom: 2px;
+    }
+
+    .controls-hint span {
+        font-size: 9px;
+    }
+
+    .world-messages {
+        top: 32px;
+        max-width: 200px;
+    }
+
+    .world-msg {
+        font-size: 10px;
+    }
+}

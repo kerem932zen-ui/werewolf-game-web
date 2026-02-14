@@ -1,0 +1,331 @@
+/* GAME SCREEN & HUD */
+.game-screen-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    background: #000;
+    overflow: hidden;
+    font-family: 'Spline Sans', sans-serif;
+}
+
+/* 3D Canvas zaten tam ekran default */
+
+/* === HUD BAR (Üst Kısım) === */
+.game-hud-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+    z-index: 50;
+    pointer-events: none;
+    /* Arkadaki 3D'yi engelleme */
+}
+
+/* Sol Kısım Düzeni (Rol - Mic - Timer) */
+.ghb-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* Elemanlar arası boşluk */
+    pointer-events: auto;
+    /* Butona basabilsin */
+}
+
+/* Rol Bilgisi */
+.my-role-info {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    height: 36px;
+}
+
+.mri-label {
+    font-size: 10px;
+    color: #aaa;
+    font-weight: 700;
+}
+
+.mri-value {
+    font-size: 13px;
+    color: #fff;
+    font-weight: 800;
+}
+
+.mri-value.wolf {
+    color: #ef4444;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+
+/* Mikrofon Butonu */
+.mic-toggle-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s;
+}
+
+.mic-toggle-btn.mic-off {
+    background: #ef4444;
+    /* Kırmızı */
+    color: white;
+}
+
+.mic-toggle-btn.mic-on {
+    background: #22c55e;
+    /* Yeşil */
+    color: white;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+}
+
+.mic-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Yeni Faz ve Timer Badge (Sol Taraf İçin) */
+.phase-timer-badge {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    height: 36px;
+}
+
+.ptb-phase {
+    background: #df113a;
+    /* Kırmızı */
+    color: white;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ptb-timer {
+    padding: 0 12px;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Sağ: Sayaç */
+.ghb-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.alive-counter {
+    font-size: 12px;
+    color: #ccc;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* === VOTING / ASSEMBLY SCREEN === */
+.assembly-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    /* Arkası hafif görünsün */
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.assembly-title {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 2rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.assembly-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /* 4 Sütun */
+    gap: 20px 15px;
+    max-width: 500px;
+    width: 100%;
+    padding: 0 20px;
+}
+
+/* Oylama Kartı */
+.vote-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.vote-card:active {
+    transform: scale(0.95);
+}
+
+.vote-avatar-frame {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    overflow: visible;
+    /* Badge taşsın */
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: #111;
+    transition: all 0.3s;
+}
+
+.vote-avatar-frame img {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    /* Frame ile uyumlu */
+    object-fit: cover;
+}
+
+/* Seçildiğinde */
+.vote-card.vote-selected .vote-avatar-frame {
+    border-color: #ef4444;
+    /* Kırmızı seçim */
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    transform: scale(1.1);
+}
+
+/* Oy Sayısı Badge */
+.vote-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    border: 2px solid #000;
+    z-index: 10;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.vote-name {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ccc;
+    text-align: center;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Alt Durum Mesajı */
+.assembly-status {
+    margin-top: 30px;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #888;
+}
+
+.assembly-status.status-voted {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.pulse-text {
+    animation: pulse 1.5s infinite;
+}
+
+/* === RESULT & GAME OVER === */
+.result-overlay,
+.gameover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.result-card,
+.gameover-card {
+    background: #111;
+    border: 1px solid #333;
+    padding: 30px;
+    border-radius: 24px;
+    text-align: center;
+    max-width: 80%;
+    width: 300px;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+}
+
+.result-role {
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ddd;
+}
+
+/* Common Animations */
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}

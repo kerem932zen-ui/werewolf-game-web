@@ -1,0 +1,48 @@
+.joystick-container {
+    position: fixed;
+    bottom: 50px;
+    left: 40px;
+    width: 140px;
+    height: 140px;
+    z-index: 101;
+    /* Joystick should be slightly above for better touch capture */
+    touch-action: none;
+}
+
+.joystick-base {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.joystick-knob {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transition: transform 0.05s ease-out;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Landscape */
+@media (orientation: landscape) and (max-height: 500px) {
+    .joystick-container {
+        width: 110px;
+        height: 110px;
+        bottom: 30px;
+        left: 30px;
+    }
+
+    .joystick-knob {
+        width: 48px;
+        height: 48px;
+    }
+}

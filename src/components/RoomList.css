@@ -1,0 +1,398 @@
+/* RoomList.css - Minimalist Dark Theme */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@100;300;400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+
+:root {
+    --primary: #df113a;
+    --primary-glow: rgba(223, 17, 58, 0.5);
+    --bg-dark: #000000;
+    --surface: #0a0a0a;
+    --glass: rgba(10, 10, 10, 0.6);
+    --text-white: #ffffff;
+    --text-dim: #aaaaaa;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000 !important;
+    /* Laciverti ezmek için siyah */
+    font-family: 'Be Vietnam Pro', sans-serif;
+    color: var(--text-white);
+    overflow: hidden;
+}
+
+.room-list-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    max-width: 480px;
+    /* Mobil genişlik sınırı */
+    margin: 0 auto;
+    background: var(--bg-dark);
+}
+
+/* === HEADER === */
+.rl-header {
+    padding: 40px 20px 20px;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+.rl-subtitle {
+    color: var(--primary);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.rl-title {
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -1px;
+    animation: subtle-glow 3s infinite;
+}
+
+.rl-title span {
+    font-size: 32px;
+    color: #ccc;
+    font-weight: 300;
+    display: block;
+}
+
+@keyframes subtle-glow {
+
+    0%,
+    100% {
+        text-shadow: 0 0 20px rgba(223, 17, 58, 0.3);
+    }
+
+    50% {
+        text-shadow: 0 0 30px rgba(223, 17, 58, 0.8);
+    }
+}
+
+/* === CREATE BUTTON === */
+.rl-create-section {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.btn-metallic {
+    width: 100%;
+    max-width: 280px;
+    padding: 16px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #440a13 0%, #df113a 50%, #2e040b 100%);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 900;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--primary-glow);
+    animation: blood-pulse 2.5s infinite;
+}
+
+@keyframes blood-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(223, 17, 58, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(223, 17, 58, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(223, 17, 58, 0);
+    }
+}
+
+/* === ROOM LIST === */
+.rl-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 20px 20px;
+    overflow: hidden;
+}
+
+.rl-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.rl-list-title {
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #22c55e;
+    animation: pulse 1s infinite;
+}
+
+.rl-list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ROOM CARD */
+.glass-panel {
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.glass-panel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-left-color: var(--primary);
+}
+
+.card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.card-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+}
+
+.card-info h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+}
+
+.card-meta {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.btn-join {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(223, 17, 58, 0.4);
+    color: var(--primary);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-join:hover {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 0 10px rgba(223, 17, 58, 0.5);
+}
+
+/* === POPUP (BOTTOM SHEET) === */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    /* Arkası görünsün */
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    /* Alttan gelsin */
+    justify-content: center;
+}
+
+.popup-content {
+    width: 100%;
+    max-width: 480px;
+    background: linear-gradient(to bottom, #1a1a1a, #000);
+    border-top-left-radius: 40px;
+    /* OVAL KÖŞELER */
+    border-top-right-radius: 40px;
+    padding: 40px 30px;
+    box-shadow: 0 -10px 40px rgba(223, 17, 58, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slide-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.popup-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.popup-title {
+    font-size: 24px;
+    font-weight: 900;
+    color: white;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px;
+    color: white;
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(223, 17, 58, 0.2);
+}
+
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.slider-value {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--primary);
+    min-width: 30px;
+}
+
+/* Range Slider Özelleştirme */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    margin-top: -8px;
+    box-shadow: 0 0 10px var(--primary);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.btn-popup-create {
+    width: 100%;
+    padding: 16px;
+    border-radius: 20px;
+    background: var(--primary);
+    color: white;
+    font-weight: 900;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(223, 17, 58, 0.4);
+    margin-top: 10px;
+}
+
+.btn-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background: transparent;
+    border: none;
+    color: #666;
+    font-size: 24px;
+    cursor: pointer;
+}
